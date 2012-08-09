@@ -55,8 +55,9 @@ on the production server (a completely arbitrary choice:-).
 
 Each password should have its own random salt. The salt's purpose is to make the
 dictionary size in a [rainbow table](http://en.wikipedia.org/wiki/Rainbow_table) or [dictionary attack](http://en.wikipedia.org/wiki/Dictionary_attack) so large that the attack is not
-feasible. Salts used with the Blowfish hash do not need to be
-cryptographically secure random strings so Randomness's salt generator by default
+feasible. Salts used with the Blowfish hash [do not need to be
+cryptographically secure](http://security.stackexchange.com/questions/7193/cryptographic-security-of-dynamically-generated-non-random-salts/7195#7195)
+random strings so Randomness's salt generator by default
 uses the cass's own pseudo-random generator.
 
 Some people advocate resalting every time a user logs in. I think this is only
