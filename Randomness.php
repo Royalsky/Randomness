@@ -2,10 +2,6 @@
 
 class Randomness
 {
-    /**
-     * @var string internal entropy buffer.
-     */
-    private $entropy = '';
 
     /**
      * Platform independent strlen()
@@ -17,6 +13,7 @@ class Randomness
      * the number of bytes.
      *
      * @param $string
+     *
      * @return int
      */
     public static function strlen($string)
@@ -35,20 +32,19 @@ class Randomness
      * @param string $string
      * @param int $start
      * @param int $length
+     *
      * @return string
      */
     public static function substr($string, $start = 0, $length = null)
     {
+        if (func_num_args() < 3) {
+            $length = self::strlen($string);
+        }
         return function_exists('mb_substr')
             ? mb_substr($string, $start, $length, 'ISO-8859-1')
             : substr($string, $start, $length);
     }
 
-    /**
-     * Log a security warning message.
-     *
-     * @param string $msg a warning message.
-     */
     public static function warn($msg)
     {
         if (class_exists('Yii')) {
@@ -66,6 +62,7 @@ class Randomness
      * possibly better than using only mt_rand which is not really random at all.
      *
      * @param bool $warn set to log a warning when the function is called
+     *
      * @return string of 64 pseudo random bytes
      */
     public static function pseudoRanBlock($warn = true)
@@ -137,14 +134,13 @@ class Randomness
     }
 
     /**
-     * Return a string of random bytes.
+     * Generate a string of random bytes.
      *
-     * This static method does not use the entropy buffer.
+     * @param int $length Number of random bytes to return
+     * @param bool $cryptoStrong Set to require crytoStrong randomness
+     * @param bool $http Set to use the http://www.random.org service
      *
-     * @param int $length Number of random bytes to return.
-     * @param bool $cryptoStrong Set to require crytoStrong randomness.
-     * @param bool $http Set to use the http://www.random.org service.
-     * @return string|bool The random binary string or false on failure.
+     * @return string|bool The random binary string or false on failure
      */
     public static function randomBytes($length = 8, $cryptoStrong = true, $http = false)
     {
@@ -221,69 +217,33 @@ class Randomness
         return self::substr($s, 0, $length);
     }
 
-    /**
-     * Return a string of random bytes.
-     *
-     * @param int $length Number of random bytes to return.
-     * @param bool $cryptoStrong Set to require crytoStrong randomness.
-     * @return string|bool The random binary string or false on failure.
-     */
-    public function bufferedBytes($length, $cryptoStrong = true)
+    private $entropy = '';
+
+    public function bufferedBytes($n, $cryptoStrong = true)
     {
-        if (self::strlen($this->entropy) < $length) {
+        if (self::strlen($this->entropy) < $n) {
             $this->entropy .= self::randomBytes(64, $cryptoStrong);
         }
-        $return = self::substr($this->entropy, 0, $length);
-        $this->entropy = self::substr($this->entropy, $length);
+        $return = self::substr($this->entropy, 0, $n);
+        $this->entropy = self::substr($this->entropy, $n);
         return $return;
     }
 
-    /**
-     * Return a random integer.
-     *
-     * Generates a random integer in the range [0, $max] from a uniform distribution.
-     * Uses buffered entropy.
-     *
-     * @param int $max Upper bound to random number.
-     * @param bool $cryptoStrong Set to require crytoStrong randomness.
-     * @return int The random integer.
-     * @throws Exception
-     */
     public function randInt($max, $cryptoStrong = true)
     {
-        // Limit to positive 4-byte signed integers.
-        if (!is_integer($max) || $max < 1 || $max > 2147483647) {
-            throw new Exception(__CLASS__ . '::' . __METHOD__ . ' param no good');
+        if ($max > 2147483647) {
+            throw new Exception(__CLASS__ . '::' . __METHOD__ . ' max parameter too big');
         }
-
-        // Number of bits required for range [0, $max].
         $nBits = ceil(log($max, 2));
-        // Number of bytes required.
         $bBytes = ceil($nBits / 8);
-        // Discard bits from here up.
-        $modulus = pow(2, $nBits);
-
-        // Iterate generating numbers from [0, 2^ceil(log2($max)) - 1] until we get one
-        // in the desired range [0, $max].
-        $i = 1;
+        $mask = pow(2, $nBits);
+        $i = 0;
         do {
-            // Get $nBytes random string from buffered entropy.
-            $ranString = $this->bufferedBytes($bBytes, $cryptoStrong);
-            // Pad it to 4 bytes.
-            $ranString = str_pad($ranString, 4, chr(0));
-            // Decode it to a long unsigned integer.
-            $n = end(unpack('L', $ranString));
-            // This is equivalent to masking the lower $nBits necause $n is
-            // uniform over [0, 2^(8 * $nBytes) - 1].
-            $n = $n % $modulus;
-            // If we don't get a number in range inside 1000 iterations, give up. The
-            // chance of this happening is in the worst case (when $nMax is a power of 2)
-            // is 1 in 10^300. Unlikely.
+            $ranString = str_pad($this->bufferedBytes($bBytes, $cryptoStrong), 4, chr(0));
+            $n = end(unpack('L', $ranString)) % $mask;
             $i += 1;
             if ($i > 999) {
-                throw new Exception(
-                    __CLASS__ . '::' . __METHOD__ . ' failed to generate number in range'
-                );
+                throw new Exception(__CLASS__ . '::' . __METHOD__ . ' failed to generate number in range');
             }
         } while ($n > $max);
         return $n;
@@ -294,6 +254,7 @@ class Randomness
      *
      * @param $cost int cost parameter between 4 and 31
      * @param bool $cryptoStrong set to require crytoStrong randomness
+     *
      * @return string salt starting $2a$
      */
     public static function blowfishSalt($cost = 10, $cryptoStrong = false)
@@ -313,6 +274,7 @@ class Randomness
      *
      * @param int $length length of the string in characters
      * @param bool $cryptoStrong set to require crytoStrong randomness
+     *
      * @return string the random string
      */
     public static function randomString($length = 8, $cryptoStrong = true)
