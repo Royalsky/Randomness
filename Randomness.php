@@ -1,5 +1,39 @@
 <?php
 
+/**
+ * Randomness class file.
+ *
+ * Copyright (c) 2013, Tom Worster All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * Neither the name of Tom Worster nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
 class Randomness
 {
 
@@ -49,6 +83,7 @@ class Randomness
     {
         if (class_exists('Yii')) {
             /** @noinspection PhpUndefinedClassInspection */
+            /** @noinspection PhpUndefinedMethodInspection */
             Yii::log($msg, 'warning', 'security');
         } else {
             error_log($msg);
@@ -232,7 +267,7 @@ class Randomness
     public function randInt($max, $cryptoStrong = true)
     {
         if ($max > 2147483647) {
-            throw new Exception(__CLASS__ . '::' . __METHOD__ . ' max parameter too big');
+            throw new \Exception(__CLASS__ . '::' . __METHOD__ . ' max parameter too big');
         }
         $nBits = ceil(log($max, 2));
         $bBytes = ceil($nBits / 8);
@@ -243,7 +278,7 @@ class Randomness
             $n = end(unpack('L', $ranString)) % $mask;
             $i += 1;
             if ($i > 999) {
-                throw new Exception(__CLASS__ . '::' . __METHOD__ . ' failed to generate number in range');
+                throw new \Exception(__CLASS__ . '::' . __METHOD__ . ' failed to generate number in range');
             }
         } while ($n > $max);
         return $n;
@@ -260,7 +295,7 @@ class Randomness
     public static function blowfishSalt($cost = 10, $cryptoStrong = false)
     {
         return
-            '$2a$' . str_pad($cost, 2, '0', STR_PAD_RIGHT) . '$'
+            '$2a$' . sprintf('%02d', $cost) . '$'
             . strtr(
                 substr(base64_encode(self::randomBytes(18, $cryptoStrong)), 0, 24),
                 array('+' => '.')

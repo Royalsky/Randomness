@@ -32,6 +32,10 @@ option to fall back on its own non-crypto-secure generator.
 
 # Storing passwords in web apps
 
+**NOTE: A more up-to-date version of this tutorial exists at
+[http://www.yiiframework.com/wiki/425/use-crypt-for-password-storage](http://www.yiiframework.com/wiki/425/use-crypt-for-password-storage).**
+
+
 
 There are many tutorials and examples that show storage of passwords in a table.
 Often the methods used are substandard and very easy to crack. For example, the
